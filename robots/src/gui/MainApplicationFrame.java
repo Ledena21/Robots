@@ -3,6 +3,8 @@ package gui;
 import java.awt.Dimension; //используется для задания размеров компонентов (ширина, высота)
 import java.awt.Toolkit;// класс для работы с системными настройками (например, получение размеров экрана)
 import java.awt.event.KeyEvent;//содержит константы для обработки событий клавиатуры
+import java.awt.event.WindowAdapter;//добавлен для обработки события закрытия окна
+import java.awt.event.WindowEvent;//добавлен для обработки события закрытия окна
 
 import javax.swing.JDesktopPane;// контейнер для внутренних окон
 import javax.swing.JFrame;//главное окно приложения
@@ -26,48 +28,106 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame // Наследуемся от JFrame (главное окно ОС)
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
+    // Менеджер для сохранения и восстановления состояний окон
+    private final WindowConfigManager configManager = new WindowConfigManager();
+    // Ссылки на окна для сохранения их состояний
+    private LogWindow logWindow;
+    private GameWindow gameWindow;
 
     public MainApplicationFrame() {
-        //Make the big window be indented 50 pixels from each edge
-        //of the screen.
-        // Получает размер экрана и устанавливает главное окно так, чтобы оно занимало почти весь экран, но с отступами.
-        int inset = 50;
+
+        configManager.loadFromFile(); // загружаем сохранённые состояния окон из файла конфигурации
+
+        int inset = 50; // отступ
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
                 screenSize.width  - inset*2,
                 screenSize.height - inset*2);
 
-        setContentPane(desktopPane);// Устанавливаем рабочий стол как содержимое окна
+        setContentPane(desktopPane); // устанавливаем рабочий стол как содержимое окна
 
 
-        LogWindow logWindow = createLogWindow();// Создаем и добавляем окно логов
-        addWindow(logWindow);
+        logWindow = createLogWindow(); // создаем и добавляем окно логов
+        addWindow(logWindow, "LogWindow");
 
-        GameWindow gameWindow = new GameWindow(); // Создаем и добавляем игровое окно
+        gameWindow = new GameWindow(); // создаем и добавляем игровое окно
         gameWindow.setSize(400,  400);
-        addWindow(gameWindow);
+        addWindow(gameWindow, "GameWindow");
 
-        setJMenuBar(generateMenuBar());// Создаем и устанавливаем меню
-        setDefaultCloseOperation(EXIT_ON_CLOSE);// При закрытии главного окна - выход
+        setJMenuBar(generateMenuBar());// создаем и устанавливаем меню
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE); // изменяем поведение закрытия: не завершать приложение сразу, а обработать событие
+        addWindowListener(new WindowAdapter() {         // добавляем обработчик закрытия главного окна для сохранения состояний
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveWindowStateAndExit(); // вызывается сохранение и выход
+            }
+        });
     }
 
     protected LogWindow createLogWindow()
     {
-        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());// Получаем источник логов
-        logWindow.setLocation(10,10);// позиция на рабочем столе
-        logWindow.setSize(300, 800);// hазмер окна
+        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());// gолучаем источник логов
+
+        // gробуем восстановить сохранённое состояние окна логов
+        WindowConfigManager.WindowState savedState = configManager.LoadState("LogWindow");
+        if (savedState != null)
+        {
+            logWindow.setLocation(savedState.getX(), savedState.getY());
+            logWindow.setSize(savedState.getWidth(), savedState.getHeight());
+            try {
+                logWindow.setMaximum(savedState.getState() == 1);
+                logWindow.setIcon(savedState.getState() == 2);
+            } catch (Exception ex) {
+            }
+            if (!savedState.isClosed())
+            {
+                logWindow.setVisible(true);
+            }
+        }
+        else
+        {
+            // pначения по умолчанию, если конфигурация не найдена
+            logWindow.setLocation(10,10);// позиция на рабочем столе
+            logWindow.setSize(300, 800);// размер окна
+        }
+
         setMinimumSize(logWindow.getSize());// устанавливаем минимальный размер главного окна
         logWindow.pack();// eпаковываем
         Logger.debug("Протокол работает");//первое сообщение в лог
         return logWindow;
     }
-//Метод добавления окна на рабочий стол
-    protected void addWindow(JInternalFrame frame)
+    //Метод добавления окна на рабочий стол
+    protected void addWindow(JInternalFrame frame, String windowName)
     {
         desktopPane.add(frame);//Добавляем на рабочий стол
-        frame.setVisible(true);//делаем видимым
+
+        // для игрового окна также пробуем восстановить состояние
+        if ("GameWindow".equals(windowName) && configManager.LoadState(windowName) != null)
+        {
+            WindowConfigManager.WindowState savedState = configManager.LoadState(windowName);
+            frame.setLocation(savedState.getX(), savedState.getY());
+            frame.setSize(savedState.getWidth(), savedState.getHeight());
+            try {
+                frame.setMaximum(savedState.getState() == 1);
+                frame.setIcon(savedState.getState() == 2);
+            } catch (Exception ex) {
+            }
+            if (!savedState.isClosed())
+            {
+                frame.setVisible(true);
+            }
+        }
+        else
+        {
+            frame.setVisible(true);//делаем видимым
+        }
     }
-    //Метод создания меню
+
+    protected void addWindow(JInternalFrame frame)
+    {
+        addWindow(frame, frame.getTitle());
+    }
+
     private JMenuBar generateMenuBar()// Создаем панель меню
     {
         JMenuBar menuBar = new JMenuBar();
@@ -76,21 +136,20 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
         JMenu fileMenu = new JMenu("Файл");
         fileMenu.setMnemonic(KeyEvent.VK_F); // Alt + F для быстрого доступа
 
-// Пункт "Выход"
+        // Выход
         JMenuItem exitMenuItem = new JMenuItem("Выход", KeyEvent.VK_X);
         exitMenuItem.addActionListener((event) -> {// addActionListener: Подключает обработчик события. Когда пользователь кликает на пункт меню, выполняется код внутри лямбды.
             confirmExit(); // Вызываем метод подтверждения выхода
         });
         fileMenu.add(exitMenuItem);// Добавляем пункт в меню
 
-        // МЕНЮ "Режим отображения"
         JMenu lookAndFeelMenu = new JMenu("Режим отображения");
         lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
         lookAndFeelMenu.getAccessibleContext().setAccessibleDescription(
                 "Управление режимом отображения приложения");
 
         {
-            // Пункт "Системная схема"  Позволяет менять внешний вид программы на системный (как у Windows) или универсальный
+            // позволяет менять внешний вид программы на системный (как у Windows) или универсальный
             JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
             systemLookAndFeel.addActionListener((event) -> {
                 setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -107,15 +166,12 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
             });
             lookAndFeelMenu.add(crossplatformLookAndFeel);
         }
-
-        // СУЩЕСТВУЮЩЕЕ МЕНЮ "Тесты"
         JMenu testMenu = new JMenu("Тесты");
         testMenu.setMnemonic(KeyEvent.VK_T);
         testMenu.getAccessibleContext().setAccessibleDescription(
                 "Тестовые команды");
 
         {
-            // Пункт "Сообщение в лог"
             JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
             addLogMessageItem.addActionListener((event) -> {
                 Logger.debug("Новая строка");
@@ -144,10 +200,58 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
         );
 
         if (result == JOptionPane.YES_OPTION) {
-            System.exit(0);// Завершаем программу
+            saveWindowStateAndExit(); // Сохраняем состояния и завершаем программу
         }
     }
-    //Метод смены внешнего вида
+
+    private void saveWindowStateAndExit()
+    {
+        if (logWindow != null)
+        {
+            saveWindowState(logWindow, "LogWindow");
+        }
+        if (gameWindow != null)
+        {
+            saveWindowState(gameWindow, "GameWindow");
+        }
+        configManager.SaveToFile();
+        System.exit(0);
+    }
+
+    private void saveWindowState(JInternalFrame frame, String windowName)
+    {
+        try
+        {
+            // определяем текущее состояние окна: 0 - нормальное, 1 - развёрнутое, 2 - свёрнутое
+            int state = 0; // normal
+            if (frame.isMaximum())
+            {
+                state = 1; // maximized
+            }
+            else if (frame.isIcon())
+            {
+                state = 2; // iconified (minimized)
+            }
+
+            // создаём объект состояния с текущими параметрами окна
+            WindowConfigManager.WindowState windowState = new WindowConfigManager.WindowState(
+                    frame.getX(),
+                    frame.getY(),
+                    frame.getWidth(),
+                    frame.getHeight(),
+                    state,
+                    frame.isClosed()
+            );
+
+            // сохраняем в менеджер конфигурации
+            configManager.SaveState(windowName, windowState);
+        }
+        catch (Exception e)
+        {
+            System.err.println("Error saving state for " + windowName + ": " + e.getMessage());
+        }
+    }
+
     private void setLookAndFeel(String className)
     {
         try
