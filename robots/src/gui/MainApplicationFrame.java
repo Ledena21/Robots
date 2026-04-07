@@ -45,11 +45,8 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
                 screenSize.height - inset*2);
 
         setContentPane(desktopPane); // устанавливаем рабочий стол как содержимое окна
-
-
         logWindow = createLogWindow(); // создаем и добавляем окно логов
         addWindow(logWindow, "LogWindow");
-
         gameWindow = new GameWindow(); // создаем и добавляем игровое окно
         gameWindow.setSize(400,  400);
         addWindow(gameWindow, "GameWindow");
@@ -190,12 +187,10 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
 
     private void saveWindowStateAndExit()
     {
-        if (logWindow != null)
-        {
+        if (logWindow != null) { // если окно создано
             saveWindowState(logWindow, "LogWindow");
         }
-        if (gameWindow != null)
-        {
+        if (gameWindow != null) {
             saveWindowState(gameWindow, "GameWindow");
         }
         configManager.SaveToFile();
