@@ -64,46 +64,37 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
         });
     }
 
-    protected LogWindow createLogWindow()
-    {
-        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());// gолучаем источник логов
-
-        // gробуем восстановить сохранённое состояние окна логов
+    protected LogWindow createLogWindow()   {
+        LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
+        // подгружаем состояние
         WindowConfigManager.WindowState savedState = configManager.LoadState("LogWindow");
-        if (savedState != null)
+        if (savedState != null) // если оно есть
         {
-            logWindow.setLocation(savedState.getX(), savedState.getY());
-            logWindow.setSize(savedState.getWidth(), savedState.getHeight());
+            logWindow.setLocation(savedState.getX(), savedState.getY()); // устанавливаем место на экране
+            logWindow.setSize(savedState.getWidth(), savedState.getHeight()); // устанавливаем параметры
             try {
-                logWindow.setMaximum(savedState.getState() == 1);
-                logWindow.setIcon(savedState.getState() == 2);
+                logWindow.setMaximum(savedState.getState() == 1); // во весь экран
+                logWindow.setIcon(savedState.getState() == 2); // свернуть
             } catch (Exception ex) {
             }
-            if (!savedState.isClosed())
-            {
-                logWindow.setVisible(true);
+            if (!savedState.isClosed()) { // если не закрыто
+                logWindow.setVisible(true); // делаем видимым
             }
         }
-        else
-        {
-            // pначения по умолчанию, если конфигурация не найдена
+        else { // если конфигурация не найдена
             logWindow.setLocation(10,10);// позиция на рабочем столе
             logWindow.setSize(300, 800);// размер окна
         }
 
-        setMinimumSize(logWindow.getSize());// устанавливаем минимальный размер главного окна
-        logWindow.pack();// eпаковываем
-        Logger.debug("Протокол работает");//первое сообщение в лог
+        setMinimumSize(logWindow.getSize());// устанавливаем минимальный размер главного окна, чтобы окно логов точно поместилось
+        logWindow.pack(); // помещаем содержимое окна в окно, регулируем размер
         return logWindow;
     }
-    //Метод добавления окна на рабочий стол
-    protected void addWindow(JInternalFrame frame, String windowName)
-    {
-        desktopPane.add(frame);//Добавляем на рабочий стол
 
+    protected void addWindow(JInternalFrame frame, String windowName) { // добавление окна на рабочий стол
+        desktopPane.add(frame); // добавляем окно в контейнер
         // для игрового окна также пробуем восстановить состояние
-        if ("GameWindow".equals(windowName) && configManager.LoadState(windowName) != null)
-        {
+        if ("GameWindow".equals(windowName) && configManager.LoadState(windowName) != null) {
             WindowConfigManager.WindowState savedState = configManager.LoadState(windowName);
             frame.setLocation(savedState.getX(), savedState.getY());
             frame.setSize(savedState.getWidth(), savedState.getHeight());
@@ -112,20 +103,13 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
                 frame.setIcon(savedState.getState() == 2);
             } catch (Exception ex) {
             }
-            if (!savedState.isClosed())
-            {
+            if (!savedState.isClosed()) {
                 frame.setVisible(true);
             }
         }
-        else
-        {
+        else {
             frame.setVisible(true);//делаем видимым
         }
-    }
-
-    protected void addWindow(JInternalFrame frame)
-    {
-        addWindow(frame, frame.getTitle());
     }
 
     private JMenuBar generateMenuBar()// Создаем панель меню
@@ -218,22 +202,16 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
         System.exit(0);
     }
 
-    private void saveWindowState(JInternalFrame frame, String windowName)
-    {
-        try
-        {
-            // определяем текущее состояние окна: 0 - нормальное, 1 - развёрнутое, 2 - свёрнутое
-            int state = 0; // normal
-            if (frame.isMaximum())
-            {
-                state = 1; // maximized
+    private void saveWindowState(JInternalFrame frame, String windowName) {
+        try {
+            int state = 0; // просто окно
+            if (frame.isMaximum()) {
+                state = 1; // во весь экран
             }
-            else if (frame.isIcon())
-            {
-                state = 2; // iconified (minimized)
+            else if (frame.isIcon()) {
+                state = 2; // свернуто в иконку
             }
 
-            // создаём объект состояния с текущими параметрами окна
             WindowConfigManager.WindowState windowState = new WindowConfigManager.WindowState(
                     frame.getX(),
                     frame.getY(),
@@ -243,12 +221,10 @@ public class MainApplicationFrame extends JFrame // Наследуемся от 
                     frame.isClosed()
             );
 
-            // сохраняем в менеджер конфигурации
             configManager.SaveState(windowName, windowState);
         }
-        catch (Exception e)
-        {
-            System.err.println("Error saving state for " + windowName + ": " + e.getMessage());
+        catch (Exception e) {
+            System.err.println(String.format("Error saving state for %s: %s", windowName, e.getMessage()));
         }
     }
 
