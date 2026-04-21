@@ -77,7 +77,7 @@ public class GameVisualizer extends JPanel implements RobotModel.RobotModelListe
     }
 
     @Override
-    public void onRobotPositionChanged(double x, double y, double direction) {
+    public void changePosition(double x, double y, double direction) {
         // Модель уведомляет о изменениях, но перерисовка идет по таймеру
     }
 

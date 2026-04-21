@@ -9,13 +9,16 @@ import model.RobotModel;
 
 /**
  * model - модель робота, источник данных о позиции и цели
- * coordinatesDisplay - текстовое поле для отображения координат (только чтение).
+ * coordinatesDisplay - текстовое поле для отображения координат
+ * Сохраняем ссылку на модель, слушаем изменение позиции робота. Создаем текстовое поле только для чтения
+ * Размещаем по центру панель, подбираем размер окна под содержимое, обновляем координаты
+ *
  */
 public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel.RobotModelListener, Saveable {
     private RobotModel model;
     private TextArea coordinatesDisplay;
 
-    public RobotCoordinatesWindow(RobotModel model) { // создаём окно координат, регистрируемся как слушатель модели
+    public RobotCoordinatesWindow(RobotModel model) {
         super("Координаты робота", true, true, true, true);
         this.model = model;
         this.model.addListener(this);
@@ -40,20 +43,12 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
         sb.append("Позиция X: ").append(String.format("%.2f", this.model.getRobotPositionX())).append("\n");
         sb.append("Позиция Y: ").append(String.format("%.2f", this.model.getRobotPositionY())).append("\n");
         sb.append("Направление: ").append(String.format("%.4f рад", this.model.getRobotDirection())).append("\n");
-        sb.append("Цель X: ").append(this.model.getTargetPositionX()).append("\n");
-        sb.append("Цель Y: ").append(this.model.getTargetPositionY()).append("\n\n");
-
-        double dx = this.model.getTargetPositionX() - this.model.getRobotPositionX();
-        double dy = this.model.getTargetPositionY() - this.model.getRobotPositionY();
-        sb.append("Разность X: ").append(String.format("%.2f", dx)).append("\n");
-        sb.append("Разность Y: ").append(String.format("%.2f", dy)).append("\n");
-
         this.coordinatesDisplay.setText(sb.toString());
     }
 
     @Override
-    public void onRobotPositionChanged(double x, double y, double direction) { // вызывается моделью при изменении позиции робота
-        EventQueue.invokeLater(this::updateDisplay); // обновляем интерфейс
+    public void changePosition(double x, double y, double direction) { // вызывается моделью при изменении позиции робота
+        EventQueue.invokeLater(() -> this.updateDisplay());// обновляем интерфейс
     }
 
     @Override
