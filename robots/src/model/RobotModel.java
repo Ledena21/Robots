@@ -4,99 +4,109 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * RobotModel модель робота, отвечающая за его физическое поведение.
- * Хранит текущую позицию x, y, направление движения
- * Уведомляет зарегистрированных слушателей об изменении позиции через интерфейс RobotModelListener.
- * m_robotPositionX, m_robotPositionY — текущие координаты робота.
- * m_robotDirection — текущее направление робота в радианах
- * maxVelocity — максимальная линейная скорость робота.
- * maxAngularVelocity — максимальная угловая скорость поворота.
- * listeners — список слушателей, получающих уведомления об изменении позиции.
+ * Модель робота. Содержит всю логику движения и состояние.
+ * Слушатели подписываются через addListener()
+ * При изменении состояния вызывается notifyListeners()
  */
+
 public class RobotModel {
     private volatile double m_robotPositionX = 100;
     private volatile double m_robotPositionY = 100;
     private volatile double m_robotDirection = 0;
+
     private volatile int m_targetPositionX = 150;
     private volatile int m_targetPositionY = 100;
 
-    private static final double maxVelocity = 0.1;
-    private static final double maxAngularVelocity = 0.001;
+    private static final double maxVelocity = 0.1;          // Максимальная линейная скорость
+    private static final double maxAngularVelocity = 0.001; // Максимальная угловая скорость
 
-    private final List<RobotModelListener> listeners = new ArrayList<>();
+    private final List<RobotModelListener> listeners = new ArrayList<>(); // Список слушателей
 
     /**
-     * Интерфейс для слушателей изменений позиции робота.
-     * Классы, реализующие этот интерфейс, могут отслеживать движение робота
-     * и реагировать на обновление его координат и направления.
+     * Интерфейс слушателя изменений модели.
+     * Окна реализуют этот интерфейс для получения уведомлений.
      */
     public interface RobotModelListener {
-        void changePosition(double x, double y, double direction);
+        void onRobotPositionChanged(double x, double y, double direction);
+        void onTargetPositionChanged(int x, int y);
     }
 
-    // добавляем слушателя в список наблюдателей.
+    /**
+     * Подписка на обновления.
+     * Окно вызывает этот метод, чтобы получать уведомления.
+     */
     public void addListener(RobotModelListener listener) {
         synchronized(listeners) {
             listeners.add(listener);
         }
     }
 
-    // удаляем слушателя из списка пользователей
+    // Отписка от обновлений
     public void removeListener(RobotModelListener listener) {
         synchronized(listeners) {
             listeners.remove(listener);
         }
     }
 
+    //  Геттеры
     public double getRobotPositionX() { return m_robotPositionX; }
     public double getRobotPositionY() { return m_robotPositionY; }
     public double getRobotDirection() { return m_robotDirection; }
     public int getTargetPositionX() { return m_targetPositionX; }
     public int getTargetPositionY() { return m_targetPositionY; }
 
-    /**
-     * Устанавливает целочисленные целевые координаты для робота
-     */
+    //  Сеттеры
     public void setTargetPosition(int x, int y) {
         m_targetPositionX = x;
         m_targetPositionY = y;
+        notifyTargetListeners();
+    }
+
+    public void setTargetPosition(double x, double y) {
+        m_targetPositionX = (int)x;
+        m_targetPositionY = (int)y;
+        notifyTargetListeners();
     }
 
     /**
-     * Обновляем позицию робота.
-     * Вычисляем расстояние до цели. У робота максимальная скорость maxVelocity.
-     * angleTo возвращает угол от текущей позиции робота к цели. Находим кратчайший путь, как повернуться.
-     * Говорим, насколько далеко проехать за шаг, насколько повернуться и длительность шага
+     * Обновляет позицию робота на один шаг.
+     * Вызывается по таймеру из GameVisualizer.
      */
     public void updatePosition() {
-        double distance = distance(m_targetPositionX, m_targetPositionY, m_robotPositionX, m_robotPositionY);
+        double distance = distance(m_targetPositionX, m_targetPositionY,
+                m_robotPositionX, m_robotPositionY);
 
         if (distance < 0.5) {
-            return;
+            return; // достигли цели
         }
 
         double velocity = maxVelocity;
-        double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY, m_targetPositionX, m_targetPositionY);
+        double angleToTarget = angleTo(m_robotPositionX, m_robotPositionY,
+                m_targetPositionX, m_targetPositionY);
+
         double angularVelocity = calculateAngularVelocity(angleToTarget);
         moveRobot(velocity, angularVelocity, 10);
         notifyListeners();
     }
 
+
     private double calculateAngularVelocity(double angleToTarget) {
+        // Вычисляем разность углов
         double diff = angleToTarget - m_robotDirection;
+
+        // Нормализуем разность в диапазон [-π, π]
         while (diff < -Math.PI) diff += 2 * Math.PI;
         while (diff > Math.PI) diff -= 2 * Math.PI;
 
+        // Если разница очень маленькая - не поворачиваем
         if (Math.abs(diff) < 0.01) {
             return 0;
         }
 
+        // Поворачиваем в сторону, где разница положительная или отрицательная
         return diff > 0 ? maxAngularVelocity : -maxAngularVelocity;
     }
 
-    /**
-     * Выполняет перемещение робота на один шаг с заданными скоростями.
-     */
     private void moveRobot(double velocity, double angularVelocity, double duration) {
         velocity = applyLimits(velocity, 0, maxVelocity);
         angularVelocity = applyLimits(angularVelocity, -maxAngularVelocity, maxAngularVelocity);
@@ -124,48 +134,51 @@ public class RobotModel {
     }
 
     /**
-     * Уведомляет всех зарегистрированных слушателей об изменении позиции.
+     * Уведомляет всех зарегистрированных слушателей об изменении позиции
      */
     private void notifyListeners() {
+        // создаём копию списка для безопасного итерирования
         List<RobotModelListener> listenersCopy;
         synchronized(listeners) {
             listenersCopy = new ArrayList<>(listeners);
         }
         for (RobotModelListener listener : listenersCopy) {
-            listener.changePosition(m_robotPositionX, m_robotPositionY, m_robotDirection);
+            listener.onRobotPositionChanged(m_robotPositionX, m_robotPositionY, m_robotDirection);
         }
     }
 
-    /**
-     * Вычисляет евклидово расстояние между двумя точками
-     */
+    private void notifyTargetListeners() {
+        List<RobotModelListener> listenersCopy;
+        synchronized(listeners) {
+            listenersCopy = new ArrayList<>(listeners);
+        }
+        for (RobotModelListener listener : listenersCopy) {
+            listener.onTargetPositionChanged(m_targetPositionX, m_targetPositionY);
+        }
+    }
+
+    // вычисляет евклидово расстояние между двумя точками (корень из суммы квадрата координат)
     private static double distance(double x1, double y1, double x2, double y2) {
         double diffX = x1 - x2;
         double diffY = y1 - y2;
         return Math.sqrt(diffX * diffX + diffY * diffY);
     }
 
-    /**
-     * Вычисляет угол направления от одной точки к другой в радианах.
-     */
+    // находит угол, под которым робот должен двигаться к цели
     private static double angleTo(double fromX, double fromY, double toX, double toY) {
         double diffX = toX - fromX;
         double diffY = toY - fromY;
         return asNormalizedRadians(Math.atan2(diffY, diffX));
     }
 
-    /**
-     * Ограничивает значение в заданных пределах [min, max].
-     */
+    // ограничивает значение заданными пределами (min и max).
     private static double applyLimits(double value, double min, double max) {
         if (value < min) return min;
         if (value > max) return max;
         return value;
     }
 
-    /**
-     * Нормализует угол в радианах в диапазон [0, 2π).
-     */
+    // метод приводит угол к нормализованному виду — значению в диапазоне от 0 до 2π (0 до 360 градусов)
     private static double asNormalizedRadians(double angle) {
         while (angle < 0) angle += 2 * Math.PI;
         while (angle >= 2 * Math.PI) angle -= 2 * Math.PI;

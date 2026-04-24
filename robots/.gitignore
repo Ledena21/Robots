@@ -1,2 +1,8 @@
-/bin/
-/.settings/
+/.metadata
+/robots/.settings
+/robots/bin
+eclipse.bat
+.idea/
+out/
+*.class
+*.jar

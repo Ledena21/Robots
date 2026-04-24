@@ -1,65 +1,30 @@
 package gui;
-
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
-import java.util.Timer;
-import java.util.TimerTask;
 import javax.swing.JPanel;
 import model.RobotModel;
-
+/**
+ * Компонент для отрисовки робота и цели.
+ * Получает данные из модели RobotModel, не хранит состояние самостоятельно:
+ * - Теперь не хранит координаты робота, а получает их из модели
+ * - Подписывается на обновления модели через RobotModelListener
+ * - Реализует паттерн MVC: View (отображение) отделена от Model (данные)
+ */
 public class GameVisualizer extends JPanel implements RobotModel.RobotModelListener {
-    private final Timer m_timer = initTimer();
     private RobotModel m_model;
-
-    private static Timer initTimer() {
-        Timer timer = new Timer("events generator", true);
-        return timer;
-    }
 
     public GameVisualizer(RobotModel model) {
         m_model = model;
-        m_model.addListener(this);
-
-        m_timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                onRedrawEvent();
-            }
-        }, 0, 50);
-
-        m_timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                onModelUpdateEvent();
-            }
-        }, 0, 10);
-
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                setTargetPosition(e.getPoint());
-            }
-        });
-
+        m_model.addListener(this); // Подписываемся на обновления модели
         setDoubleBuffered(true);
-    }
-
-    protected void setTargetPosition(Point p) {
-        m_model.setTargetPosition(p.x, p.y);
     }
 
     protected void onRedrawEvent() {
         EventQueue.invokeLater(this::repaint);
-    }
-
-    protected void onModelUpdateEvent() {
-        m_model.updatePosition();
     }
 
     private static int round(double value) {
@@ -70,15 +35,24 @@ public class GameVisualizer extends JPanel implements RobotModel.RobotModelListe
     public void paint(Graphics g) {
         super.paint(g);
         Graphics2D g2d = (Graphics2D)g;
-        drawRobot(g2d, round(m_model.getRobotPositionX()),
+        // Данные для отрисовки получаем из модели
+        drawRobot(g2d,
+                round(m_model.getRobotPositionX()),
                 round(m_model.getRobotPositionY()),
                 m_model.getRobotDirection());
-        drawTarget(g2d, m_model.getTargetPositionX(), m_model.getTargetPositionY());
+        drawTarget(g2d,
+                m_model.getTargetPositionX(),
+                m_model.getTargetPositionY());
     }
 
     @Override
-    public void changePosition(double x, double y, double direction) {
-        // Модель уведомляет о изменениях, но перерисовка идет по таймеру
+    public void onRobotPositionChanged(double x, double y, double direction) {
+        onRedrawEvent();
+    }
+
+    @Override
+    public void onTargetPositionChanged(int x, int y) {
+        onRedrawEvent();
     }
 
     private static void fillOval(Graphics g, int centerX, int centerY, int diam1, int diam2) {

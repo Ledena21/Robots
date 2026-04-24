@@ -1,5 +1,4 @@
 package gui;
-
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
@@ -18,27 +17,23 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import log.Logger;
 import model.RobotModel;
-
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final ConfigRead configRead = new ConfigRead();
-    private final ConfigWrite configWrite = new ConfigWrite();
-    private final RobotModel robotModel = new RobotModel();
-
+    private final WindowConfig windowConfig = new WindowConfig(); // единый менеджер конфигурации
+    private final RobotModel robotModel; // передаётся извне
     // массив окон, поддерживающих сохранение состояния
     private final List<Saveable> saveableWindows = new ArrayList<>();
 
-    public MainApplicationFrame() { // инициализируем главное окно: размер, контент, меню, обработчик закрытия
+    public MainApplicationFrame(RobotModel model) { // инициализируем главное окно: размер, контент, меню, обработчик закрытия, модель
+        this.robotModel = model;
         int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset, screenSize.width - inset * 2, screenSize.height - inset * 2);
         setContentPane(desktopPane);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-
         addSaveableWindow(createLogWindow());
         addSaveableWindow(new GameWindow(robotModel));
         addSaveableWindow(createCoordinatesWindow());
-
         setJMenuBar(generateMenuBar());
         addWindowListener(new WindowAdapter() {
             @Override
@@ -48,19 +43,16 @@ public class MainApplicationFrame extends JFrame {
         });
     }
 
-    /** Регистрируем окно в приложении
-     * Если окно типа JInternalFrame, добавляем его в массив caveableWindows и в контейнер.
+    /**  Если окно типа JInternalFrame, добавляем его в массив saveableWindows и в контейнер.
      * Восстанавливаем состояние из конфига, если оно есть, применяем его.
      * Если окно открыто, делаем его видимым
      */
     private void addSaveableWindow(Saveable window) {
         if (!(window instanceof JInternalFrame)) return;
         JInternalFrame frame = (JInternalFrame) window;
-
         saveableWindows.add(window);
         desktopPane.add(frame);
-
-        WindowState savedState = configRead.getState(window.getWindowName());
+        WindowState savedState = windowConfig.getState(window.getWindowName());
         if (savedState != null) {
             frame.setSize(savedState.getWidth(), savedState.getHeight());
             frame.setLocation(savedState.getX(), savedState.getY());
@@ -94,7 +86,6 @@ public class MainApplicationFrame extends JFrame {
         JMenuItem exitMenuItem = new JMenuItem("Выход", KeyEvent.VK_X);
         exitMenuItem.addActionListener(event -> confirmExit()); // при клике на пункт вызывается метод confirmExit(), который показывает диалог подтверждения
         fileMenu.add(exitMenuItem);
-
         JMenu lookAndFeelMenu = new JMenu("Режим отображения");
         lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
         JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
@@ -103,13 +94,11 @@ public class MainApplicationFrame extends JFrame {
         JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_U);
         crossplatformLookAndFeel.addActionListener(event -> setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName()));
         lookAndFeelMenu.add(crossplatformLookAndFeel);
-
         JMenu testMenu = new JMenu("Тесты");
         testMenu.setMnemonic(KeyEvent.VK_T);
         JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_M);
         addLogMessageItem.addActionListener(event -> Logger.debug("Новая строка"));
         testMenu.add(addLogMessageItem);
-
         menuBar.add(fileMenu);
         menuBar.add(lookAndFeelMenu);
         menuBar.add(testMenu);
@@ -125,15 +114,15 @@ public class MainApplicationFrame extends JFrame {
         }
     }
 
-    /** Автоматическое сохранение состояния всех зарегистрированных окон.
+    /** Сохраняет состояния всех зарегистрированных окон.
      * Проходит по массиву saveableWindows, собирает состояния и записывает в файл.
      * После сохранения завершает работу приложения.
      */
     private void saveAllWindowsAndExit() {
         for (Saveable window : saveableWindows) {
-            configWrite.saveState(window.getWindowName(), window.getWindowState());
+            windowConfig.saveState(window.getWindowName(), window.getWindowState());
         }
-        configWrite.saveToFile();
+        windowConfig.saveToFile();
         System.exit(0);
     }
 
