@@ -1,5 +1,4 @@
 package gui;
-
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.TextArea;
@@ -8,7 +7,6 @@ import javax.swing.JPanel;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
-
 public class LogWindow extends JInternalFrame implements LogChangeListener, Saveable {
     private LogWindowSource m_logSource;
     private TextArea m_logContent;
@@ -45,9 +43,10 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
 
     @Override
     public WindowState getWindowState() {
-        int state = isMaximum() ? 1 : (isIcon() ? 2 : 0);
+        // Используем enum для определения состояния окна
+        WindowState.Type type = isMaximum() ? WindowState.Type.MAXIMIZED : (isIcon() ? WindowState.Type.ICONIFIED : WindowState.Type.NORMAL);
         return new WindowState(
-                getX(), getY(), getWidth(), getHeight(), state, isClosed()
+                getX(), getY(), getWidth(), getHeight(), type.getNum(), isClosed()
         );
     }
 }

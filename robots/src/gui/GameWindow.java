@@ -24,7 +24,8 @@ public class GameWindow extends JInternalFrame implements Saveable {
 
     @Override
     public WindowState getWindowState() {
-        int state = isMaximum() ? 1 : (isIcon() ? 2 : 0);
-        return new WindowState(getX(), getY(), getWidth(), getHeight(), state, isClosed());
+        // Используем enum для определения состояния окна
+        WindowState.Type type = isMaximum() ? WindowState.Type.MAXIMIZED : (isIcon() ? WindowState.Type.ICONIFIED : WindowState.Type.NORMAL);
+        return new WindowState(getX(), getY(), getWidth(), getHeight(), type.getNum(), isClosed());
     }
 }

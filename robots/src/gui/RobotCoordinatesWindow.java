@@ -6,21 +6,21 @@ import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import model.RobotModel;
 /**
- * Отображает данные модели, подписывается на её обновления
- выводит точные координаты робота в реальном времени
+ * Отображает данные модели, подписывается на обновления модели
+ * мы видим точные координаты робота в реальном времени
  */
 public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel.RobotModelListener, Saveable {
     private RobotModel m_model;
-    private TextArea m_coordinatesDisplay;
+    private TextArea m_coordinatesDisplay;//текстовое поле с координатами
 
     public RobotCoordinatesWindow(RobotModel model) {
         super("Координаты робота", true, true, true, true);
         m_model = model;
         // подписываемся на обновления модели, при каждом движении робота будет вызываться onRobotPositionChanged()
         m_model.addListener(this);
-
+        // Создаём текстовое поле для отображения
         m_coordinatesDisplay = new TextArea("");
-        m_coordinatesDisplay.setEditable(false);
+        m_coordinatesDisplay.setEditable(false);// Только для чтения
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(m_coordinatesDisplay, BorderLayout.CENTER);
         getContentPane().add(panel);
@@ -52,13 +52,15 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
     }
 
     @Override
-    public void onTargetPositionChanged(int x, int y) {}
+    public void onTargetPositionChanged(int x, int y) {
+        // окно координат может игнорировать изменение цели или тоже как-то отображать
+    }
 
     private void updateCoordinates(double x, double y, double direction) {
         EventQueue.invokeLater(this::updateDisplay);
     }
 
-    //Возвращает уникальное строковое имя окна.
+    // возвращает имя окна.
     @Override
     public String getWindowName() {
         return "CoordinatesWindow";
@@ -67,7 +69,8 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
     //Собирает текущее состояние окна в один объект WindowState и возвращает его.
     @Override
     public WindowState getWindowState() {
-        int state = isMaximum() ? 1 : (isIcon() ? 2 : 0);
-        return new WindowState(getX(), getY(), getWidth(), getHeight(), state, isClosed());
+        // Используем enum для определения состояния окна
+        WindowState.Type type = isMaximum() ? WindowState.Type.MAXIMIZED : (isIcon() ? WindowState.Type.ICONIFIED : WindowState.Type.NORMAL);
+        return new WindowState(getX(), getY(), getWidth(), getHeight(), type.getNum(), isClosed());
     }
 }

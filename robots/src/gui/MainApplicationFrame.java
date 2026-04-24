@@ -57,8 +57,9 @@ public class MainApplicationFrame extends JFrame {
             frame.setSize(savedState.getWidth(), savedState.getHeight());
             frame.setLocation(savedState.getX(), savedState.getY());
             try {
-                if (savedState.getState() == 1) frame.setMaximum(true);
-                else if (savedState.getState() == 2) frame.setIcon(true);
+                // Используем понятные имена состояний через enum
+                if (savedState.getType() == WindowState.Type.MAXIMIZED) frame.setMaximum(true);
+                else if (savedState.getType() == WindowState.Type.ICONIFIED) frame.setIcon(true);
                 frame.setClosed(savedState.isClosed());
             } catch (Exception ignored) {}
         }
