@@ -3,6 +3,7 @@ import java.awt.BorderLayout;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
 import model.RobotModel;
+
 public class GameWindow extends JInternalFrame implements Saveable {
     private final GameVisualizer m_visualizer;
     private final RobotController m_controller;
@@ -25,7 +26,7 @@ public class GameWindow extends JInternalFrame implements Saveable {
     @Override
     public WindowState getWindowState() {
         // Используем enum для определения состояния окна
-        WindowState.Type type = isMaximum() ? WindowState.Type.MAXIMIZED : (isIcon() ? WindowState.Type.ICONIFIED : WindowState.Type.NORMAL);
+        WindowStateType type = isMaximum() ? WindowStateType.MAXIMIZED : (isIcon() ? WindowStateType.ICONIFIED : WindowStateType.NORMAL);
         return new WindowState(getX(), getY(), getWidth(), getHeight(), type.getNum(), isClosed());
     }
 }

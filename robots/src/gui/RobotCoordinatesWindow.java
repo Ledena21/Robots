@@ -1,28 +1,34 @@
 package gui;
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
-import java.awt.TextArea;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import model.RobotModel;
+
 /**
  * Отображает данные модели, подписывается на обновления модели
  * мы видим точные координаты робота в реальном времени
  */
 public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel.RobotModelListener, Saveable {
     private RobotModel m_model;
-    private TextArea m_coordinatesDisplay;//текстовое поле с координатами
+    private JTextArea m_coordinatesDisplay; //текстовое поле с координатами
 
     public RobotCoordinatesWindow(RobotModel model) {
         super("Координаты робота", true, true, true, true);
         m_model = model;
         // подписываемся на обновления модели, при каждом движении робота будет вызываться onRobotPositionChanged()
         m_model.addListener(this);
-        // Создаём текстовое поле для отображения
-        m_coordinatesDisplay = new TextArea("");
-        m_coordinatesDisplay.setEditable(false);// Только для чтения
+
+        // создаём текстовое поле для отображения
+        m_coordinatesDisplay = new JTextArea("");
+        m_coordinatesDisplay.setEditable(false);
+        m_coordinatesDisplay.setFocusable(false);
+        JScrollPane scrollPane = new JScrollPane(m_coordinatesDisplay);
+
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(m_coordinatesDisplay, BorderLayout.CENTER);
+        panel.add(scrollPane, BorderLayout.CENTER);
         getContentPane().add(panel);
         pack();
         updateDisplay();
@@ -53,7 +59,7 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
 
     @Override
     public void onTargetPositionChanged(int x, int y) {
-        // окно координат может игнорировать изменение цели или тоже как-то отображать
+        EventQueue.invokeLater(this::updateDisplay);
     }
 
     private void updateCoordinates(double x, double y, double direction) {
@@ -66,11 +72,10 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
         return "CoordinatesWindow";
     }
 
-    //Собирает текущее состояние окна в один объект WindowState и возвращает его.
+    //собирает текущее состояние окна в один объект WindowState и возвращает его.
     @Override
     public WindowState getWindowState() {
-        // Используем enum для определения состояния окна
-        WindowState.Type type = isMaximum() ? WindowState.Type.MAXIMIZED : (isIcon() ? WindowState.Type.ICONIFIED : WindowState.Type.NORMAL);
+        WindowStateType type = isMaximum() ? WindowStateType.MAXIMIZED : (isIcon() ? WindowStateType.ICONIFIED : WindowStateType.NORMAL);
         return new WindowState(getX(), getY(), getWidth(), getHeight(), type.getNum(), isClosed());
     }
 }

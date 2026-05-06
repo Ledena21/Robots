@@ -17,6 +17,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import log.Logger;
 import model.RobotModel;
+
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
     private final WindowConfig windowConfig = new WindowConfig(); // единый менеджер конфигурации
@@ -58,8 +59,8 @@ public class MainApplicationFrame extends JFrame {
             frame.setLocation(savedState.getX(), savedState.getY());
             try {
                 // Используем понятные имена состояний через enum
-                if (savedState.getType() == WindowState.Type.MAXIMIZED) frame.setMaximum(true);
-                else if (savedState.getType() == WindowState.Type.ICONIFIED) frame.setIcon(true);
+                if (savedState.getType() == WindowStateType.MAXIMIZED) frame.setMaximum(true);
+                else if (savedState.getType() == WindowStateType.ICONIFIED) frame.setIcon(true);
                 frame.setClosed(savedState.isClosed());
             } catch (Exception ignored) {}
         }

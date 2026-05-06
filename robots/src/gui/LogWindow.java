@@ -7,6 +7,7 @@ import javax.swing.JPanel;
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
+
 public class LogWindow extends JInternalFrame implements LogChangeListener, Saveable {
     private LogWindowSource m_logSource;
     private TextArea m_logContent;
@@ -44,7 +45,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
     @Override
     public WindowState getWindowState() {
         // Используем enum для определения состояния окна
-        WindowState.Type type = isMaximum() ? WindowState.Type.MAXIMIZED : (isIcon() ? WindowState.Type.ICONIFIED : WindowState.Type.NORMAL);
+        WindowStateType type = isMaximum() ? WindowStateType.MAXIMIZED : (isIcon() ? WindowStateType.ICONIFIED : WindowStateType.NORMAL);
         return new WindowState(
                 getX(), getY(), getWidth(), getHeight(), type.getNum(), isClosed()
         );
