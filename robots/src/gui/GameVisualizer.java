@@ -28,7 +28,7 @@ public class GameVisualizer extends JPanel implements RobotModel.RobotModelListe
     }
 
     private static int round(double value) {
-        return (int)(value + 0.5);
+        return (int) Math.round(value); // (value + 0.5) некорректно работало для отрицательных чисел, теперь используется встроенный метод
     }
 
     @Override

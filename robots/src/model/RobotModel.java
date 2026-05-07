@@ -63,8 +63,8 @@ public class RobotModel {
     }
 
     public void setTargetPosition(double x, double y) {
-        m_targetPositionX = (int)x;
-        m_targetPositionY = (int)y;
+        m_targetPositionX = Double.valueOf(x).intValue();
+        m_targetPositionY = Double.valueOf(y).intValue();
         notifyTargetListeners();
     }
 

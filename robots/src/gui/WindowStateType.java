@@ -1,5 +1,4 @@
 package gui;
-
 /**
  * Типы состояний окна: нормальное, развёрнутое, свёрнутое.
  * Вынесен в отдельный класс для удобства переиспользования.
@@ -9,19 +8,15 @@ public enum WindowStateType {
     MAXIMIZED(1),   // во весь экран
     ICONIFIED(2);   // свёрнуто в значок
 
-    private final int num;
+    public final int number;
 
-    WindowStateType(int num) {
-        this.num = num;
+    WindowStateType(int number) {
+        this.number = number;
     }
 
-    public int getNum() {
-        return num;
-    }
-
-    public static WindowStateType fromNum(int num) {
+    public static WindowStateType fromInteger(int number) {
         for (WindowStateType type : values()) {
-            if (type.num == num) {
+            if (type.number == number) {
                 return type;
             }
         }

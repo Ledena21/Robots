@@ -20,7 +20,7 @@ import model.RobotModel;
 
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final WindowConfig windowConfig = new WindowConfig(); // единый менеджер конфигурации
+    private final WindowStateManager windowStateManager = new WindowStateManager(); // единый менеджер конфигурации
     private final RobotModel robotModel; // передаётся извне
     // массив окон, поддерживающих сохранение состояния
     private final List<Saveable> saveableWindows = new ArrayList<>();
@@ -53,7 +53,7 @@ public class MainApplicationFrame extends JFrame {
         JInternalFrame frame = (JInternalFrame) window;
         saveableWindows.add(window);
         desktopPane.add(frame);
-        WindowState savedState = windowConfig.getState(window.getWindowName());
+        WindowState savedState = windowStateManager.getState(window.getWindowName());
         if (savedState != null) {
             frame.setSize(savedState.getWidth(), savedState.getHeight());
             frame.setLocation(savedState.getX(), savedState.getY());
@@ -122,9 +122,9 @@ public class MainApplicationFrame extends JFrame {
      */
     private void saveAllWindowsAndExit() {
         for (Saveable window : saveableWindows) {
-            windowConfig.saveState(window.getWindowName(), window.getWindowState());
+            windowStateManager.saveState(window.getWindowName(), window.getWindowState());
         }
-        windowConfig.saveToFile();
+        windowStateManager.save(); // метод переименован, инкапсулирует детали сохранения
         System.exit(0);
     }
 

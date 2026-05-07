@@ -44,10 +44,6 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
 
     @Override
     public WindowState getWindowState() {
-        // Используем enum для определения состояния окна
-        WindowStateType type = isMaximum() ? WindowStateType.MAXIMIZED : (isIcon() ? WindowStateType.ICONIFIED : WindowStateType.NORMAL);
-        return new WindowState(
-                getX(), getY(), getWidth(), getHeight(), type.getNum(), isClosed()
-        );
+        return WindowStateManager.createWindowState(this);
     }
 }
