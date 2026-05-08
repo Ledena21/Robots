@@ -23,8 +23,5 @@ public class GameWindow extends JInternalFrame implements Saveable {
         return "GameWindow";
     }
 
-    @Override
-    public WindowState getWindowState() {
-        return WindowStateManager.createWindowState(this);
-    }
+    // метод GetWindowState удален, теперь он берется из интерфейса
 }

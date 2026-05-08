@@ -1,22 +1,25 @@
 package gui;
 import java.util.Properties;
+import java.util.Optional;
 /**
  * Менеджер состояний окон.
  * Преобразует состояния окон в свойства и делегирует
  * чтение и запись классу ConfigFile.
- * windowStates - коллекция (ключ - имя окна, значение - объект с параметрами окна).
  */
 public class WindowStateManager {
-    private final ConfigFile configFile = new ConfigFile();
+    private final ConfigFile configFile;
     private Properties props;
 
-    public WindowStateManager() { // читаем состояния из файла при создании
-        props = configFile.load();
+    // конструктор с параметром, принимает файл извне
+    public WindowStateManager(ConfigFile configFile) {
+        this.configFile = configFile;
+        props = configFile.load(); // читаем состояния из файла при создании
     }
 
-    public WindowState getState(String windowName) { // передаем имя окна, получаем состояние
+    public Optional<WindowState> getState(String windowName) {
         String prefix = "window." + windowName;
-        if (props.getProperty(prefix + ".x") == null) return null;
+        if (props.getProperty(prefix + ".x") == null) return Optional.empty();
+
         try {
             int x      = Integer.parseInt(props.getProperty(prefix + ".x", "0"));
             int y      = Integer.parseInt(props.getProperty(prefix + ".y", "0"));
@@ -24,15 +27,18 @@ public class WindowStateManager {
             int height = Integer.parseInt(props.getProperty(prefix + ".height", "300"));
             int state  = Integer.parseInt(props.getProperty(prefix + ".state", "0"));
             boolean closed = Boolean.parseBoolean(props.getProperty(prefix + ".closed", "false"));
-            return new WindowState(x, y, width, height, state, closed);
+            return Optional.of(new WindowState(x, y, width, height, state, closed));
         } catch (NumberFormatException e) {
             System.err.println(String.format("Error parsing window state for %s: %s", windowName, e.getMessage()));
-            return null;
+            return Optional.empty();
         }
     }
 
-    /** Сохраняет состояние окна сразу на диск. */
-    public void saveState(String windowName, WindowState state) { // добавляем состояние окна и сохраняем
+    /** Сохраняет состояние окна.
+     *  Теперь сразу сохраняет на диск, чтобы избежать рассинхронизации
+     *  и чтобы нельзя было "забыть" вызвать сохранение.
+     */
+    public void saveState(String windowName, WindowState state) {
         String name = windowName;
         props.setProperty("window." + name + ".x",      String.valueOf(state.getX()));
         props.setProperty("window." + name + ".y",      String.valueOf(state.getY()));
@@ -40,13 +46,8 @@ public class WindowStateManager {
         props.setProperty("window." + name + ".height", String.valueOf(state.getHeight()));
         props.setProperty("window." + name + ".state",  String.valueOf(state.getState()));
         props.setProperty("window." + name + ".closed", String.valueOf(state.isClosed()));
-    }
 
-    /** Сохраняет данные в файл.
-     * Поручает запись объекта Properties классу ConfigFile.
-     * При ошибке записи выводит сообщение в консоль.
-     */
-    public void save() {
+        // сохраняем автоматически
         configFile.save(props);
     }
 

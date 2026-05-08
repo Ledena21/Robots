@@ -20,7 +20,7 @@ import model.RobotModel;
 
 public class MainApplicationFrame extends JFrame {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final WindowStateManager windowStateManager = new WindowStateManager(); // единый менеджер конфигурации
+    private final WindowStateManager windowStateManager = new WindowStateManager(new ConfigFile()); // создаем здесь ConfigFile и передаем в WindowStateManager
     private final RobotModel robotModel; // передаётся извне
     // массив окон, поддерживающих сохранение состояния
     private final List<Saveable> saveableWindows = new ArrayList<>();
@@ -53,8 +53,8 @@ public class MainApplicationFrame extends JFrame {
         JInternalFrame frame = (JInternalFrame) window;
         saveableWindows.add(window);
         desktopPane.add(frame);
-        WindowState savedState = windowStateManager.getState(window.getWindowName());
-        if (savedState != null) {
+        // используем Optional.ifPresent()
+        windowStateManager.getState(window.getWindowName()).ifPresent(savedState -> {
             frame.setSize(savedState.getWidth(), savedState.getHeight());
             frame.setLocation(savedState.getX(), savedState.getY());
             try {
@@ -63,7 +63,8 @@ public class MainApplicationFrame extends JFrame {
                 else if (savedState.getType() == WindowStateType.ICONIFIED) frame.setIcon(true);
                 frame.setClosed(savedState.isClosed());
             } catch (Exception ignored) {}
-        }
+        });
+
         frame.setVisible(!frame.isClosed());
     }
 
@@ -124,7 +125,7 @@ public class MainApplicationFrame extends JFrame {
         for (Saveable window : saveableWindows) {
             windowStateManager.saveState(window.getWindowName(), window.getWindowState());
         }
-        windowStateManager.save(); // метод переименован, инкапсулирует детали сохранения
+// здесь был метод save, теперь его не надо вызывать, потому что метод saveState уже сохраняет в файл
         System.exit(0);
     }
 

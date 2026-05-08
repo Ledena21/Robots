@@ -72,9 +72,5 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
         return "CoordinatesWindow";
     }
 
-    //собирает текущее состояние окна в один объект WindowState и возвращает его.
-    @Override
-    public WindowState getWindowState() {
-        return WindowStateManager.createWindowState(this);
-    }
+    // метод GetWindowState удален, теперь он берется из интерфейса
 }

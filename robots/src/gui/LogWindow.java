@@ -42,8 +42,5 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
     @Override
     public String getWindowName() { return "LogWindow"; }
 
-    @Override
-    public WindowState getWindowState() {
-        return WindowStateManager.createWindowState(this);
-    }
+    // метод GetWindowState удален, теперь он берется из интерфейса
 }
