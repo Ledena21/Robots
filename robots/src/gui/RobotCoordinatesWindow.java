@@ -1,4 +1,5 @@
 package gui;
+
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import javax.swing.JInternalFrame;
@@ -8,20 +9,22 @@ import javax.swing.JTextArea;
 import model.RobotModel;
 
 /**
- * Отображает данные модели, подписывается на обновления модели
- * мы видим точные координаты робота в реальном времени
+ * Окно отображения текущих координат робота и его цели в реальном времени.
+ * Реализует паттерн Observer (слушатель) для мгновенного обновления информации при изменении модели.
  */
 public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel.RobotModelListener, Saveable {
-    private RobotModel m_model;
-    private JTextArea m_coordinatesDisplay; //текстовое поле с координатами
+    private final RobotModel m_model;
+    private final JTextArea m_coordinatesDisplay;
 
+    /**
+     * Создает новое окно координат робота на основе предоставленной модели.
+     * Возвращает источник данных о положении робота.
+     */
     public RobotCoordinatesWindow(RobotModel model) {
         super("Координаты робота", true, true, true, true);
         m_model = model;
-        // подписываемся на обновления модели, при каждом движении робота будет вызываться onRobotPositionChanged()
         m_model.addListener(this);
 
-        // создаём текстовое поле для отображения
         m_coordinatesDisplay = new JTextArea("");
         m_coordinatesDisplay.setEditable(false);
         m_coordinatesDisplay.setFocusable(false);
@@ -35,8 +38,7 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
     }
 
     /**
-     * Обновляет текстовое отображение координат.
-     * Читает текущие данные из модели.
+     * Извлекает из модели актуальные координаты и перерисовывает текстовое поле окна.
      */
     private void updateDisplay() {
         StringBuilder sb = new StringBuilder();
@@ -51,26 +53,27 @@ public class RobotCoordinatesWindow extends JInternalFrame implements RobotModel
         m_coordinatesDisplay.setText(sb.toString());
     }
 
-    // вызываем и реагируем на событие (обновляем координаты)
+    /**
+     * Перехватывает событие изменения позиции робота.
+     */
     @Override
     public void onRobotPositionChanged(double x, double y, double direction) {
-        updateCoordinates(x, y, direction);
+        EventQueue.invokeLater(this::updateDisplay);
     }
 
+    /**
+     * Перехватывает событие перемещения целевой точки.
+     */
     @Override
     public void onTargetPositionChanged(int x, int y) {
         EventQueue.invokeLater(this::updateDisplay);
     }
 
-    private void updateCoordinates(double x, double y, double direction) {
-        EventQueue.invokeLater(this::updateDisplay);
-    }
-
-    // возвращает имя окна.
+    /**
+     * Возвращает текстовое имя окна.
+     */
     @Override
     public String getWindowName() {
         return "CoordinatesWindow";
     }
-
-    // метод GetWindowState удален, теперь он берется из интерфейса
 }

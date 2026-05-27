@@ -1,4 +1,5 @@
 package gui;
+
 import java.awt.BorderLayout;
 import java.awt.EventQueue;
 import java.awt.TextArea;
@@ -9,8 +10,8 @@ import log.LogEntry;
 import log.LogWindowSource;
 
 public class LogWindow extends JInternalFrame implements LogChangeListener, Saveable {
-    private LogWindowSource m_logSource;
-    private TextArea m_logContent;
+    private final LogWindowSource m_logSource;
+    private final TextArea m_logContent;
 
     public LogWindow(LogWindowSource logSource) {
         super("Протокол работы", true, true, true, true);
@@ -40,7 +41,7 @@ public class LogWindow extends JInternalFrame implements LogChangeListener, Save
     }
 
     @Override
-    public String getWindowName() { return "LogWindow"; }
-
-    // метод GetWindowState удален, теперь он берется из интерфейса
+    public String getWindowName() {
+        return "LogWindow";
+    }
 }

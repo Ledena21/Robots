@@ -1,25 +1,31 @@
 package gui;
+
+import java.util.Optional;
+
 /**
  * Типы состояний окна: нормальное, развёрнутое, свёрнутое.
- * Вынесен в отдельный класс для удобства переиспользования.
  */
 public enum WindowStateType {
     NORMAL(0),      // обычный режим
     MAXIMIZED(1),   // во весь экран
     ICONIFIED(2);   // свёрнуто в значок
 
-    public final int number;
+    private final int num;
 
-    WindowStateType(int number) {
-        this.number = number;
+    WindowStateType(int num) {
+        this.num = num;
     }
 
-    public static WindowStateType fromInteger(int number) {
+    public int getNum() {
+        return num;
+    }
+
+    public static Optional<WindowStateType> fromNum(int num) {
         for (WindowStateType type : values()) {
-            if (type.number == number) {
-                return type;
+            if (type.num == num) {
+                return Optional.of(type);
             }
         }
-        return NORMAL; // значение по умолчанию
+        return Optional.empty(); // Возвращаем пустой Optional, если ничего не нашли
     }
 }

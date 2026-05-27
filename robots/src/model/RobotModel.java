@@ -63,16 +63,16 @@ public class RobotModel {
     }
 
     public void setTargetPosition(double x, double y) {
-        m_targetPositionX = Double.valueOf(x).intValue();
-        m_targetPositionY = Double.valueOf(y).intValue();
+        m_targetPositionX = (int)x;
+        m_targetPositionY = (int)y;
         notifyTargetListeners();
     }
 
     /**
      * Обновляет позицию робота на один шаг.
-     * Вызывается по таймеру из GameVisualizer.
+     * возвращает deltaTime время в миллисекундах, прошедшее с последнего обновления.
      */
-    public void updatePosition() {
+    public void updatePosition(int deltaTime) {
         double distance = distance(m_targetPositionX, m_targetPositionY,
                 m_robotPositionX, m_robotPositionY);
 
@@ -85,7 +85,9 @@ public class RobotModel {
                 m_targetPositionX, m_targetPositionY);
 
         double angularVelocity = calculateAngularVelocity(angleToTarget);
-        moveRobot(velocity, angularVelocity, 10);
+
+        // Передаем deltaTime вместо захардкоженного числа 10
+        moveRobot(velocity, angularVelocity, deltaTime);
         notifyListeners();
     }
 

@@ -1,25 +1,22 @@
 package gui;
+
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import javax.swing.JPanel;
 import model.RobotModel;
+
 /**
  * Компонент для отрисовки робота и цели.
- * Получает данные из модели RobotModel, не хранит состояние самостоятельно:
- * - Теперь не хранит координаты робота, а получает их из модели
- * - Подписывается на обновления модели через RobotModelListener
- * - Реализует паттерн MVC: View (отображение) отделена от Model (данные)
  */
 public class GameVisualizer extends JPanel implements RobotModel.RobotModelListener {
-    private RobotModel m_model;
+    private final RobotModel m_model;
 
     public GameVisualizer(RobotModel model) {
         m_model = model;
-        m_model.addListener(this); // Подписываемся на обновления модели
+        m_model.addListener(this);
         setDoubleBuffered(true);
     }
 
@@ -27,15 +24,17 @@ public class GameVisualizer extends JPanel implements RobotModel.RobotModelListe
         EventQueue.invokeLater(this::repaint);
     }
 
+    /**
+     * Выполняет математически точное округление double до int без небезопасных приведений типов (Правка 9).
+     */
     private static int round(double value) {
-        return (int) Math.round(value); // (value + 0.5) некорректно работало для отрицательных чисел, теперь используется встроенный метод
+        return Math.toIntExact(Math.round(value));
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
         Graphics2D g2d = (Graphics2D)g;
-        // Данные для отрисовки получаем из модели
         drawRobot(g2d,
                 round(m_model.getRobotPositionX()),
                 round(m_model.getRobotPositionY()),
@@ -64,8 +63,8 @@ public class GameVisualizer extends JPanel implements RobotModel.RobotModelListe
     }
 
     private void drawRobot(Graphics2D g, int x, int y, double direction) {
-        int robotCenterX = round(m_model.getRobotPositionX());
-        int robotCenterY = round(m_model.getRobotPositionY());
+        int robotCenterX = x;
+        int robotCenterY = y;
         AffineTransform t = AffineTransform.getRotateInstance(direction, robotCenterX, robotCenterY);
         g.setTransform(t);
         g.setColor(Color.MAGENTA);

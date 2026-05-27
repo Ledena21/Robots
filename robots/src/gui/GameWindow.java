@@ -1,4 +1,5 @@
 package gui;
+
 import java.awt.BorderLayout;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
@@ -22,6 +23,4 @@ public class GameWindow extends JInternalFrame implements Saveable {
     public String getWindowName() {
         return "GameWindow";
     }
-
-    // метод GetWindowState удален, теперь он берется из интерфейса
 }
